@@ -10,8 +10,7 @@ import numpy as np
 
 # Constants for default resampling method, working directory, and download directory
 DEFAULT_RESAMPLING = "cubic"
-DEFAULT_WORKING_DIRECTORY = "."
-DEFAULT_DOWNLOAD_DIRECTORY = "SoilGrids_download"
+DEFAULT_DOWNLOAD_DIRECTORY = join("~", "data", "SoilGrids")
 
 class SoilGrids:
     """
@@ -56,26 +55,20 @@ class SoilGrids:
     # Logger for logging information
     logger = logging.getLogger(__name__)
 
-    def __init__(self, working_directory: str = None, source_directory: str = None, resampling: str = DEFAULT_RESAMPLING):
+    def __init__(self, source_directory: str = None, resampling: str = DEFAULT_RESAMPLING):
         """
         Initializes the SoilGrids object with a working directory, source directory, and resampling method.
 
         Parameters
         ----------
-        working_directory : str, optional
-            The working directory for the SoilGrids object (default is None).
         source_directory : str, optional
             The source directory for the SoilGrids object (default is None).
         resampling : str, optional
             The resampling method for the SoilGrids object (default is DEFAULT_RESAMPLING).
         """
-        if working_directory is None:
-            working_directory = abspath(expanduser(DEFAULT_WORKING_DIRECTORY))
-
         if source_directory is None:
             source_directory = join(working_directory, DEFAULT_DOWNLOAD_DIRECTORY)
 
-        self.working_directory = abspath(expanduser(working_directory))
         self.source_directory = abspath(expanduser(source_directory))
         self.resampling = resampling
 
@@ -229,3 +222,21 @@ class SoilGrids:
         image = rt.clip(image / 100, 0, 1)
 
         return image
+
+def load_wilting_point(
+        geometry: RasterGeometry = None, 
+        directory: str = DEFAULT_DOWNLOAD_DIRECTORY, 
+        resampling: str = DEFAULT_RESAMPLING) -> Raster:
+    soil_grids = SoilGrids(source_directory=directory, resampling=resampling)
+    wilting_point = soil_grids.WP(geometry=geometry, resampling=resampling)
+    
+    return wilting_point
+
+def load_field_capacity(
+        geometry: RasterGeometry = None, 
+        directory: str = DEFAULT_DOWNLOAD_DIRECTORY, 
+        resampling: str = DEFAULT_RESAMPLING) -> Raster:
+    soil_grids = SoilGrids(source_directory=directory, resampling=resampling)
+    field_capacity = soil_grids.FC(geometry=geometry, resampling=resampling)
+    
+    return field_capacity
