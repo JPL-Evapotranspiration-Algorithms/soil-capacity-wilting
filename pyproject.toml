@@ -15,7 +15,7 @@ classifiers = [
 ]
 dependencies = [
     "numpy",
-    "rasters",
+    "rasters>=1.7.0",
     "sentinel-tiles"
 ]
 
