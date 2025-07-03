@@ -4,6 +4,7 @@ from os import makedirs, system
 from os.path import abspath, expanduser, exists, dirname, join
 from shutil import move
 from time import perf_counter
+from typing import Union
 import rasters as rt
 from rasters import RasterGeometry, Raster
 import numpy as np
@@ -33,7 +34,7 @@ class SoilGrids:
 
     Methods
     -------
-    __init__(self, working_directory: str = None, source_directory: str = None, resampling: str = DEFAULT_RESAMPLING)
+    __init__(self, source_directory: str = None, resampling: str = DEFAULT_RESAMPLING)
         Initializes the SoilGrids object with a working directory, source directory, and resampling method.
     __repr__(self) -> str
         Returns a string representation of the SoilGrids object.
@@ -43,10 +44,10 @@ class SoilGrids:
         Returns the filename of the wilting point soil data file.
     download_file(self, URL: str, filename: str) -> str
         Downloads a file from a given URL to a specified filename.
-    FC(self, geometry: RasterGeometry = None, resampling: str = None) -> Raster
-        Processes the field capacity soil data file and returns the processed raster.
-    WP(self, geometry: RasterGeometry = None, resampling: str = None) -> Raster
-        Processes the WP soil data file and returns the processed raster.
+    FC(self, geometry: RasterGeometry = None, resampling: str = None) -> Union[Raster, np.ndarray]
+        Processes the field capacity soil data file and returns the processed raster or array.
+    WP(self, geometry: RasterGeometry = None, resampling: str = None) -> Union[Raster, np.ndarray]
+        Processes the WP soil data file and returns the processed raster or array.
     """
     # URLs to specific soil data files on Zenodo
     FC_URL = "https://zenodo.org/record/2784001/files/sol_watercontent.33kPa_usda.4b1c_m_250m_b0..0cm_1950..2017_v0.1.tif"
@@ -67,7 +68,7 @@ class SoilGrids:
             The resampling method for the SoilGrids object (default is DEFAULT_RESAMPLING).
         """
         if source_directory is None:
-            source_directory = join(working_directory, DEFAULT_DOWNLOAD_DIRECTORY)
+            source_directory = DEFAULT_DOWNLOAD_DIRECTORY
 
         self.source_directory = abspath(expanduser(source_directory))
         self.resampling = resampling
@@ -147,9 +148,9 @@ class SoilGrids:
 
     def FC(self,
            geometry: RasterGeometry = None,
-           resampling: str = None) -> Raster:
+           resampling: str = None) -> Union[Raster, np.ndarray]:
         """
-        Processes the field capacity soil data file and returns the processed raster.
+        Processes the field capacity soil data file and returns the processed raster or array.
 
         Parameters
         ----------
@@ -160,8 +161,8 @@ class SoilGrids:
 
         Returns
         -------
-        Raster
-            The processed raster.
+        Union[Raster, np.ndarray]
+            The processed raster or array.
         """
         if resampling is None:
             resampling = self.resampling
@@ -179,16 +180,21 @@ class SoilGrids:
         )
 
         image = rt.where(image == 255, np.nan, image)
-        image.nodata = np.nan
-        image = rt.clip(image / 100, 0, 1)
+        
+        if isinstance(image, rt.Raster):
+            image.nodata = np.nan
+            image = rt.clip(image / 100, 0, 1)
+        else:  # image is np.ndarray
+            image = np.where(image == 255, np.nan, image)
+            image = np.clip(image / 100, 0, 1)
 
         return image
 
     def WP(self,
            geometry: RasterGeometry = None,
-           resampling: str = None) -> Raster:
+           resampling: str = None) -> Union[Raster, np.ndarray]:
         """
-        Processes the wilting point soil data file and returns the processed raster.
+        Processes the wilting point soil data file and returns the processed raster or array.
 
         Parameters
         ----------
@@ -199,8 +205,8 @@ class SoilGrids:
 
         Returns
         -------
-        Raster
-            The processed raster.
+        Union[Raster, np.ndarray]
+            The processed raster or array.
         """
         if resampling is None:
             resampling = self.resampling
@@ -218,15 +224,20 @@ class SoilGrids:
         )
 
         image = rt.where(image == 255, np.nan, image)
-        image.nodata = np.nan
-        image = rt.clip(image / 100, 0, 1)
+        
+        if isinstance(image, rt.Raster):
+            image.nodata = np.nan
+            image = rt.clip(image / 100, 0, 1)
+        else:  # image is np.ndarray
+            image = np.where(image == 255, np.nan, image)
+            image = np.clip(image / 100, 0, 1)
 
         return image
 
 def load_wilting_point(
         geometry: RasterGeometry = None, 
         directory: str = DEFAULT_DOWNLOAD_DIRECTORY, 
-        resampling: str = DEFAULT_RESAMPLING) -> Raster:
+        resampling: str = DEFAULT_RESAMPLING) -> Union[Raster, np.ndarray]:
     soil_grids = SoilGrids(source_directory=directory, resampling=resampling)
     wilting_point = soil_grids.WP(geometry=geometry, resampling=resampling)
     
@@ -235,7 +246,7 @@ def load_wilting_point(
 def load_field_capacity(
         geometry: RasterGeometry = None, 
         directory: str = DEFAULT_DOWNLOAD_DIRECTORY, 
-        resampling: str = DEFAULT_RESAMPLING) -> Raster:
+        resampling: str = DEFAULT_RESAMPLING) -> Union[Raster, np.ndarray]:
     soil_grids = SoilGrids(source_directory=directory, resampling=resampling)
     field_capacity = soil_grids.FC(geometry=geometry, resampling=resampling)
     

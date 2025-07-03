@@ -3,7 +3,7 @@ requires = ["setuptools>=60", "setuptools-scm>=8.0", "wheel"]
 
 [project]
 name = "soil-capacity-wilting"
-version = "1.1.0"
+version = "1.2.0"
 description = "generates rasters of field capacity and wilting point from the SoilGrids dataset"
 readme = "README.md"
 authors = [
@@ -15,7 +15,7 @@ classifiers = [
 ]
 dependencies = [
     "numpy",
-    "rasters",
+    "rasters>=1.7.0",
     "sentinel-tiles"
 ]
 
